@@ -69,3 +69,74 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 - CI/CD using GitHub Actions
 
 ---
+
+## 📐 Project Scope
+
+### In Scope
+- Web-based flood visualization platform  
+- Real-time or periodically refreshed weather data  
+- Cloud deployment  
+- Focus on performance and scalability  
+
+### Out of Scope
+- Mobile applications  
+- SMS / WhatsApp alerting  
+- AI-based flood prediction models  
+- Advanced analytics dashboards  
+
+---
+
+## 🗓 Project Timeline (4 Weeks)
+
+| Week | Focus |
+|-----|------|
+| Week 1 | Requirement analysis, architecture design, project setup |
+| Week 2 | Core development and data integration |
+| Week 3 | Frontend-backend integration, testing |
+| Week 4 | Deployment, documentation, demo preparation |
+
+---
+
+## 📊 Success Criteria
+
+- Working web application deployed on cloud  
+- Accurate visualization of meteorological data  
+- Clear and understandable flood risk indicators  
+- Stable performance under moderate load  
+- Positive feedback during demo and review  
+
+---
+
+## 🚧 Current Status
+
+🟡 **Planning Phase**  
+Project setup and development will begin after finalizing architecture and responsibilities.
+
+---
+
+## 📘 Why This Project Matters
+
+Early awareness saves lives.  
+By making flood-related data **visible, understandable, and timely**, this platform aims to support better preparedness and faster decision-making at the community level.
+
+---
+
+## 👥 Team
+
+**Team 03 – Full-Stack Development Sprint**
+
+---
+
+## 🔮 Future Enhancements (Post-Sprint)
+
+- SMS or WhatsApp alerts  
+- Multi-language support  
+- Historical flood data analysis  
+- AI-based risk prediction  
+
+---
+
+### ✅ Note for Reviewers
+
+This README describes the **project vision and plan**.  
+Implementation details and technical documentation will be added as development progresses.

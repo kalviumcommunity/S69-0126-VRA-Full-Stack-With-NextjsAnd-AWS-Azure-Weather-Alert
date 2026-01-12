@@ -139,4 +139,4 @@ By making flood-related data **visible, understandable, and timely**, this platf
 ### ✅ Note for Reviewers
 
 This README describes the **project vision and plan**.  
-Implementation details and technical documentation will be added as development progresses.
+Implementation details and technical documentation will be added as development progresses

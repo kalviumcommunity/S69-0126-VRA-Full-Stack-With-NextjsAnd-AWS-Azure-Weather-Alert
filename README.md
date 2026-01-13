@@ -1,4 +1,4 @@
-# 🌊 Flood Early Warning & Visualization System
+# Flood Early Warning & Visualization System
 
 A web-based early-warning system designed to help residents in **flood-prone districts** prepare in advance by visualizing **real-time meteorological data** and issuing **clear, actionable alerts**.
 
@@ -6,7 +6,7 @@ This project is being built as part of a **4-week Full-Stack Development Sprint*
 
 ---
 
-## 📌 Problem Statement
+## Problem Statement
 
 Flood-prone regions often have access to open meteorological data such as rainfall, weather forecasts, and river levels.  
 However, this data is:
@@ -19,7 +19,7 @@ As a result, local residents are unable to **prepare early**, leading to propert
 
 ---
 
-## 💡 Proposed Solution
+## Proposed Solution
 
 We aim to build a **centralized web platform** that:
 
@@ -32,7 +32,7 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 
 ---
 
-## 🎯 Target Users
+## Target Users
 
 - Residents of flood-prone districts  
 - Local community volunteers  
@@ -40,7 +40,7 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 
 ---
 
-## 🧠 Key Features (Planned)
+## Key Features (Planned)
 
 - Location-based weather and rainfall monitoring  
 - Flood risk status indicators  
@@ -50,7 +50,7 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 
 ---
 
-## 🛠 Proposed Tech Stack
+## Proposed Tech Stack
 
 ### Frontend
 - **Next.js (App Router)**
@@ -70,7 +70,7 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 
 ---
 
-## 📐 Project Scope
+## Project Scope
 
 ### In Scope
 - Web-based flood visualization platform  
@@ -86,7 +86,7 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 
 ---
 
-## 🗓 Project Timeline (4 Weeks)
+## Project Timeline (4 Weeks)
 
 | Week | Focus |
 |-----|------|
@@ -97,7 +97,7 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 
 ---
 
-## 📊 Success Criteria
+## Success Criteria
 
 - Working web application deployed on cloud  
 - Accurate visualization of meteorological data  
@@ -107,7 +107,7 @@ The platform focuses on **clarity, performance, and accessibility**, ensuring th
 
 ---
 
-## 🚧 Current Status
+## Current Status
 
 🟡 **Planning Phase**  
 Project setup and development will begin after finalizing architecture and responsibilities.

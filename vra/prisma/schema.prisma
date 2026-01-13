@@ -14,22 +14,25 @@ model User {
   id        Int       @id @default(autoincrement())
   name      String
   email     String    @unique
-  projects  Project[]
+  alerts    Alerts[]
+  floods    Floods[]
 }
 
-model Project {
+model Floods {
   id        Int       @id @default(autoincrement())
   name      String
   createdAt DateTime  @default(now())
   userId    Int
   user      User      @relation(fields: [userId], references: [id])
-  tasks     Task[]
+  parentId  Int?
+  parent    Floods?   @relation("FloodsHierarchy", fields: [parentId], references: [id])
+  tasks     Floods[]  @relation("FloodsHierarchy")
 }
 
-model Task {
-  id          Int      @id @default(autoincrement())
-  title       String
-  status      String
-  projectId   Int
-  project     Project  @relation(fields: [projectId], references: [id])
+model Alerts {
+  id        Int      @id @default(autoincrement())
+  title     String
+  status    String
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
 }

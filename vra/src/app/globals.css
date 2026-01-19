@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@theme {
+  
+  --color-flood-low: theme('colors.emerald.500');
+  --color-flood-medium: theme('colors.yellow.500');
+  --color-flood-high: theme('colors.orange.500');
+  --color-flood-severe: theme('colors.red.600');
+  --font-sans: var(--font-inter);
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: theme('colors.blue.600');
+  --primary-foreground: #ffffff;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans), sans-serif;
+}

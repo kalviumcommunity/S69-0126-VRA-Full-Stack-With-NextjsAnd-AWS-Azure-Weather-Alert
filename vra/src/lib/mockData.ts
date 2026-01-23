@@ -11,12 +11,12 @@ export const ALERTS = [
 ];
 
 export const STATES_RISK = [
-    { name: 'Kerala', risk: 'High', disasterPercent: 75, trend: 'increasing' },
-    { name: 'Assam', risk: 'Severe', disasterPercent: 92, trend: 'stable' },
-    { name: 'Maharashtra', risk: 'Medium', disasterPercent: 45, trend: 'decreasing' },
-    { name: 'Tamil Nadu', risk: 'Low', disasterPercent: 12, trend: 'stable' },
-    { name: 'Bihar', risk: 'High', disasterPercent: 68, trend: 'increasing' },
-    { name: 'Odisha', risk: 'Medium', disasterPercent: 38, trend: 'decreasing' },
+    { name: 'Kerala', risk: 'High', disasterPercent: 75, trend: 'increasing', rainfall: 250, humidity: 88, pastFloods: 'Severe floods in 2018, 2019' },
+    { name: 'Assam', risk: 'Severe', disasterPercent: 92, trend: 'stable', rainfall: 320, humidity: 92, pastFloods: 'Annual flooding, major in 2020' },
+    { name: 'Maharashtra', risk: 'Medium', disasterPercent: 45, trend: 'decreasing', rainfall: 180, humidity: 75, pastFloods: 'Mumbai floods 2005, 2017' },
+    { name: 'Tamil Nadu', risk: 'Low', disasterPercent: 12, trend: 'stable', rainfall: 90, humidity: 65, pastFloods: 'Chennai floods 2015' },
+    { name: 'Bihar', risk: 'High', disasterPercent: 68, trend: 'increasing', rainfall: 210, humidity: 82, pastFloods: 'Kosi river floods frequently' },
+    { name: 'Odisha', risk: 'Medium', disasterPercent: 38, trend: 'decreasing', rainfall: 150, humidity: 78, pastFloods: 'Cyclone related flooding' },
 ];
 
 export const FORECAST_DATA = [

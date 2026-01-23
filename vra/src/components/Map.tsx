@@ -37,9 +37,10 @@ interface MapProps {
         radius: number;
         color: string;
     }>;
+    onMarkerClick?: (id: string | number) => void;
 }
 
-export default function MapComponent({ center, zoom, markers = [], riskZones = [] }: MapProps) {
+export default function MapComponent({ center, zoom, markers = [], riskZones = [], onMarkerClick }: MapProps) {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -57,7 +58,13 @@ export default function MapComponent({ center, zoom, markers = [], riskZones = [
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {markers.map((marker) => (
-                <Marker key={marker.id} position={marker.position}>
+                <Marker
+                    key={marker.id}
+                    position={marker.position}
+                    eventHandlers={{
+                        click: () => onMarkerClick?.(marker.id),
+                    }}
+                >
                     <Popup>
                         <div className="p-2">
                             <h3 className="font-bold">{marker.title}</h3>

@@ -12,7 +12,7 @@ import { ArrowRight, AlertOctagon, TrendingUp, TrendingDown, Minus, X, Loader2 }
 import RiskBadge from '@/components/RiskBadge';
 import { STATES_RISK } from '@/lib/mockData';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const MapComponent = dynamic(() => import('@/components/Map'), {
     ssr: false,
@@ -48,20 +48,47 @@ export default function OverviewPage() {
         setIsAnalysisModalOpen(true);
         setAnalysisResult('');
 
+        // Default to mock data values
+        let rainfall = selectedState.rainfall;
+        let humidity = selectedState.humidity;
+        let dataSource = "Mock Data";
+
         try {
+            // 1. Try to fetch live data if coordinates exist
+            if (selectedState.lat && selectedState.lng) {
+                try {
+                    const weatherRes = await fetch(`/api/floods?lat=${selectedState.lat}&lng=${selectedState.lng}`);
+                    if (weatherRes.ok) {
+                        const weatherData = await weatherRes.json();
+                        if (weatherData?.data) {
+                            // Update values with live data
+                            // Ambee Weather API likely returns precipIntensity (mm) and humidity (%)
+                            // Using fallback to mock if specific field is missing in live response
+                            if (weatherData.data.precipIntensity !== undefined) rainfall = weatherData.data.precipIntensity;
+                            if (weatherData.data.humidity !== undefined) humidity = weatherData.data.humidity;
+                            dataSource = "Live Ambee API";
+                            console.log(`Using Live Data for ${selectedState.name}: Rain=${rainfall}, Hum=${humidity}`);
+                        }
+                    }
+                } catch (wErr) {
+                    console.warn("Failed to fetch live weather for analysis, using mock values.", wErr);
+                }
+            }
+
+            // 2. Call AI Analysis with (potentially) live data
             const response = await fetch('/api/ai-risk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    rainfall: selectedState.rainfall,
-                    humidity: selectedState.humidity,
+                    rainfall: rainfall,
+                    humidity: humidity,
                     pastFloods: selectedState.pastFloods
                 }),
             });
 
             const data = await response.json();
             if (response.ok) {
-                setAnalysisResult(data.aiAnalysis);
+                setAnalysisResult(data.aiAnalysis + `\n\n(Data Source: ${dataSource})`);
             } else {
                 setAnalysisResult("Failed to fetch analysis. Please try again.");
             }
@@ -72,6 +99,58 @@ export default function OverviewPage() {
             setLoading(false);
         }
     };
+
+    // State for map data (initialized with mock, will update with live)
+    const [mapStates, setMapStates] = useState(STATES_RISK);
+
+    useEffect(() => {
+        async function fetchAllStatesLive() {
+            const updates = await Promise.all(STATES_RISK.map(async (state) => {
+                if (!state.lat || !state.lng) return state;
+
+                try {
+                    const res = await fetch(`/api/floods?lat=${state.lat}&lng=${state.lng}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const weather = data.data;
+                        if (weather) {
+                            // Simple heuristic for demo: High rain = High risk
+                            // PrecipIntensity: Ambee returns this in mm/hr usually
+                            const rain = weather.precipIntensity || 0;
+                            let newRisk = 'Low';
+                            let newTrend = 'stable';
+
+                            if (rain > 5) {
+                                newRisk = 'Severe';
+                                newTrend = 'increasing';
+                            } else if (rain > 1) {
+                                newRisk = 'High';
+                                newTrend = 'increasing';
+                            } else if (rain > 0.1) {
+                                newRisk = 'Medium';
+                            }
+
+                            return {
+                                ...state,
+                                rainfall: Math.round(rain * 24), // Approx daily from hourly rate if that's what API returns, or just raw
+                                humidity: Math.round(weather.humidity || state.humidity),
+                                risk: newRisk,
+                                trend: newTrend,
+                                // Keep other mock fields or update as needed
+                            };
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to update state grid:", state.name);
+                }
+                return state;
+            }));
+
+            setMapStates(updates as any);
+        }
+
+        fetchAllStatesLive();
+    }, []);
 
     return (
         <div className="h-[calc(100vh-4rem)] flex flex-col md:flex-row bg-slate-50 overscroll-none overflow-hidden relative">
@@ -89,25 +168,29 @@ export default function OverviewPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-center">
                             <span className="block text-2xl font-bold text-red-600">
-                                {STATES_RISK.filter(s => s.risk === 'Severe' || s.risk === 'High').length}
+                                {mapStates.filter(s => s.risk === 'Severe' || s.risk === 'High').length}
                             </span>
                             <span className="text-xs text-red-800 font-medium">Critical States</span>
                         </div>
                         <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
                             <span className="block text-2xl font-bold text-blue-600">
-                                {STATES_RISK.length}
+                                {mapStates.length}
                             </span>
                             <span className="text-xs text-blue-800 font-medium">Monitored</span>
                         </div>
                     </div>
 
-                    {/* Pie Chart */}
+                    {/* Pie Chart - Updating with live derived risks */}
                     <div className="h-48 w-full bg-white rounded-xl border border-slate-100 p-2">
-                        <h3 className="text-xs font-semibold text-slate-500 text-center mb-2">Risk Distribution</h3>
+                        <h3 className="text-xs font-semibold text-slate-500 text-center mb-2">Risk Distribution (Live)</h3>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={riskDistribution}
+                                    data={[
+                                        { name: 'High Risk', value: mapStates.filter(s => s.risk === 'Severe' || s.risk === 'High').length, color: '#ef4444' },
+                                        { name: 'Medium Risk', value: mapStates.filter(s => s.risk === 'Medium').length, color: '#f59e0b' },
+                                        { name: 'Low Risk', value: mapStates.filter(s => s.risk === 'Low').length, color: '#10b981' },
+                                    ]}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={40}
@@ -115,7 +198,11 @@ export default function OverviewPage() {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {riskDistribution.map((entry, index) => (
+                                    {[
+                                        { name: 'High Risk', value: mapStates.filter(s => s.risk === 'Severe' || s.risk === 'High').length, color: '#ef4444' },
+                                        { name: 'Medium Risk', value: mapStates.filter(s => s.risk === 'Medium').length, color: '#f59e0b' },
+                                        { name: 'Low Risk', value: mapStates.filter(s => s.risk === 'Low').length, color: '#10b981' },
+                                    ].map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
@@ -130,7 +217,7 @@ export default function OverviewPage() {
                             <AlertOctagon className="h-4 w-4" /> State Risk Status
                         </h3>
                         <div className="space-y-3">
-                            {STATES_RISK.map((state) => (
+                            {mapStates.map((state) => (
                                 <div
                                     key={state.name}
                                     onClick={() => handleStateClick(state.name)}
@@ -173,19 +260,16 @@ export default function OverviewPage() {
                     center={indiaCenter}
                     zoom={5}
                     onMarkerClick={handleStateClick}
-                    // Adding mock markers for states - in real app would use GeoJSON
-                    markers={STATES_RISK.map((s, i) => ({
+                    markers={mapStates.map((s) => ({
                         id: s.name,
-                        // Mock positions roughly distributed (just for demo visual)
-                        position: [20 + (i * 2) * (i % 2 === 0 ? 1 : -1), 78 + (i * 2)],
+                        position: [s.lat || 20, s.lng || 78], // Use real coords or fallback
                         title: s.name,
-                        description: `Risk: ${s.risk} | Impact: ${s.disasterPercent}%`
+                        description: `Risk: ${s.risk} | Rain: ${s.rainfall}mm`
                     }))}
-                    // Mock risk zones
-                    riskZones={STATES_RISK.map((s, i) => ({
-                        center: [20 + (i * 2) * (i % 2 === 0 ? 1 : -1), 78 + (i * 2)],
+                    riskZones={mapStates.map((s) => ({
+                        center: [s.lat || 20, s.lng || 78],
                         radius: 150000,
-                        color: s.risk === 'Severe' || s.risk === 'High' ? 'red' : s.risk === 'Medium' ? 'orange' : 'green'
+                        color: (s.risk === 'Severe' || s.risk === 'High') ? 'red' : (s.risk === 'Medium' ? 'orange' : 'green')
                     }))}
                 />
 

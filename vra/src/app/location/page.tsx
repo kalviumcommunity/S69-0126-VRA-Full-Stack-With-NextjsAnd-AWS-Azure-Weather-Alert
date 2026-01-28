@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { CloudRain, Wind, Droplets, Thermometer, Calendar } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import WeatherCard from '@/components/WeatherCard';
 import RiskBadge from '@/components/RiskBadge';
 import { RainfallChart, ImpactGauge } from '@/components/FloodCharts';
@@ -18,6 +19,41 @@ export default function LocationPage() {
     const impactScore = 78;
 
     const mapCenter: [number, number] = [9.9312, 76.2673]; // Kochi co-ords
+
+    const [metrics, setMetrics] = useState(WEATHER_METRICS);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchLiveData() {
+            try {
+                // Fetching from our local API which proxies Ambee
+                // Note: We are using Ambee Weather API as Flood API access was restricted
+                const response = await fetch(`/api/floods?lat=${mapCenter[0]}&lng=${mapCenter[1]}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.data) {
+                        // Transform Ambee data to our format
+                        // Ambee structure usually: { data: { temperature, humidity, windSpeed, precipIntensity, ... } }
+                        const ambeeData = data.data;
+                        setMetrics({
+                            temperature: Math.round(ambeeData.temperature || WEATHER_METRICS.temperature),
+                            humidity: Math.round(ambeeData.humidity || WEATHER_METRICS.humidity),
+                            rainfall: Math.round(ambeeData.precipIntensity || WEATHER_METRICS.rainfall), // Using precipIntensity for rainfall
+                            windSpeed: Math.round(ambeeData.windSpeed || WEATHER_METRICS.windSpeed),
+                        });
+                        console.log("Using Live Ambee Data:", ambeeData);
+                    }
+                } else {
+                    console.warn("Failed to fetch live data, using mock.");
+                }
+            } catch (err) {
+                console.error("Error fetching live flood/weather data:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchLiveData();
+    }, []);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -54,10 +90,10 @@ export default function LocationPage() {
 
                     {/* Weather Cards Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <WeatherCard title="Rainfall" value={WEATHER_METRICS.rainfall} unit="mm" icon={CloudRain} colorClass="text-blue-500" />
-                        <WeatherCard title="Temp" value={WEATHER_METRICS.temperature} unit="°C" icon={Thermometer} colorClass="text-orange-500" />
-                        <WeatherCard title="Humidity" value={WEATHER_METRICS.humidity} unit="%" icon={Droplets} colorClass="text-indigo-500" />
-                        <WeatherCard title="Wind" value={WEATHER_METRICS.windSpeed} unit="km/h" icon={Wind} colorClass="text-cyan-500" />
+                        <WeatherCard title="Rainfall" value={metrics.rainfall} unit="mm" icon={CloudRain} colorClass="text-blue-500" />
+                        <WeatherCard title="Temp" value={metrics.temperature} unit="°C" icon={Thermometer} colorClass="text-orange-500" />
+                        <WeatherCard title="Humidity" value={metrics.humidity} unit="%" icon={Droplets} colorClass="text-indigo-500" />
+                        <WeatherCard title="Wind" value={metrics.windSpeed} unit="km/h" icon={Wind} colorClass="text-cyan-500" />
                     </div>
 
                     {/* Forecast Timeline */}

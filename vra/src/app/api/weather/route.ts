@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const url = `https://api.open-meteo.com/v1/forecast
       ?latitude=${lat}
       &longitude=${lon}
-      &hourly=rain,relative_humidity_2m,temperature_2m
+      &hourly=rain,relative_humidity_2m,temperature_2m,wind_speed_10m
       &daily=rain_sum
       &timezone=auto`.replace(/\s/g, "");
 
@@ -25,9 +25,11 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       location: { lat, lon },
-      dailyRainfall: data.daily.rain_sum[0],
+      temperature: Math.round(data.hourly.temperature_2m[0]),
+      humidity: Math.round(data.hourly.relative_humidity_2m[0]),
+      rainfall: Math.round(data.daily.rain_sum[0] || 0),
+      windSpeed: Math.round(data.hourly.wind_speed_10m[0]),
       hourlyRain: data.hourly.rain.slice(0, 5),
-      humidity: data.hourly.relative_humidity_2m.slice(0, 5),
       source: "Open-Meteo",
     });
   } catch {

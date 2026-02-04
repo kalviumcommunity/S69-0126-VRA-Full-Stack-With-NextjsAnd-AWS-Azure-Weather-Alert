@@ -31,6 +31,10 @@ interface MapProps {
         position: [number, number];
         title: string;
         description?: string;
+        risk?: string;
+        rainfall?: number;
+        humidity?: number;
+        pastFloods?: string;
     }>;
     riskZones?: Array<{
         center: [number, number];
@@ -38,10 +42,10 @@ interface MapProps {
         color: string;
     }>;
     onMarkerClick?: (id: string | number) => void;
-    onMapClick?: (e: any) => void;
+    onAnalyzeClick?: (id: string | number) => void;
 }
 
-export default function MapComponent({ center, zoom, markers = [], riskZones = [], onMarkerClick, onMapClick }: MapProps) {
+export default function MapComponent({ center, zoom, markers = [], riskZones = [], onMarkerClick, onAnalyzeClick }: MapProps) {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -72,10 +76,50 @@ export default function MapComponent({ center, zoom, markers = [], riskZones = [
                         click: () => onMarkerClick?.(marker.id),
                     }}
                 >
-                    <Popup>
-                        <div className="p-2">
-                            <h3 className="font-bold">{marker.title}</h3>
-                            {marker.description && <p>{marker.description}</p>}
+                    <Popup className="custom-popup">
+                        <div className="p-1 min-w-[200px]">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-bold text-lg text-slate-800">{marker.title}</h3>
+                                {marker.risk && (
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${marker.risk === 'Severe' ? 'bg-red-100 text-red-700' :
+                                        marker.risk === 'High' ? 'bg-orange-100 text-orange-700' :
+                                            marker.risk === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-green-100 text-green-700'
+                                        }`}>
+                                        {marker.risk} Risk
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="space-y-1 text-sm text-slate-600">
+                                <div className="flex justify-between">
+                                    <span>Rainfall:</span>
+                                    <span className="font-medium text-blue-600">{marker.rainfall || 0} mm</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Humidity:</span>
+                                    <span className="font-medium text-blue-600">{marker.humidity || 0}%</span>
+                                </div>
+
+                                {marker.pastFloods && (
+                                    <div className="mt-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                                        <span className="font-semibold text-slate-700">Past Event:</span>
+                                        <div className="line-clamp-2">{marker.pastFloods}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-3">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onAnalyzeClick?.(marker.id);
+                                    }}
+                                    className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-1"
+                                >
+                                    Analyze Risk
+                                </button>
+                            </div>
                         </div>
                     </Popup>
                 </Marker>

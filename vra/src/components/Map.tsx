@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -57,7 +57,13 @@ export default function MapComponent({ center, zoom, markers = [], riskZones = [
     }
 
     return (
-        <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} className="z-0">
+        <MapContainer 
+            center={center} 
+            zoom={zoom} 
+            style={{ height: '100%', width: '100%' }} 
+            className="z-0"
+        >
+            <MapClickHandler onMapClick={onMapClick} />
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -128,4 +134,14 @@ export default function MapComponent({ center, zoom, markers = [], riskZones = [
             ))}
         </MapContainer>
     );
+}
+
+// Helper component to handle map click events
+function MapClickHandler({ onMapClick }: { onMapClick?: (e: any) => void }) {
+    useMapEvents({
+        click(e) {
+            onMapClick?.(e);
+        },
+    });
+    return null;
 }

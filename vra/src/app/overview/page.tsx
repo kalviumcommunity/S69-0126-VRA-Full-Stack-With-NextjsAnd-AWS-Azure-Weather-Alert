@@ -287,7 +287,7 @@ export default function OverviewPage() {
 
             {/* Right Panel: Full Map */}
             <div className="flex-1 relative h-[50vh] md:h-full bg-slate-200">
-                <div className="absolute top-4 left-4 z-[400] bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-md border border-slate-200">
+                <div className="absolute top-4 left-4 z-400 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-md border border-slate-200">
                     <h2 className="font-bold text-slate-800">India Flood Heatmap</h2>
                     <div className="flex items-center gap-2 mt-1 text-xs text-slate-600">
                         <span className="w-3 h-3 rounded-full bg-red-500"></span> High Risk
@@ -331,7 +331,7 @@ export default function OverviewPage() {
                     }))}
                 />
 
-                <div className="absolute bottom-8 right-8 z-[400]">
+                <div className="absolute bottom-8 right-8 z-400">
                     <button
                         onClick={() => fetchAIAnalysis()}
                         className="bg-white/90 backdrop-blur text-blue-600 px-4 py-2 rounded-lg shadow-lg font-medium flex items-center gap-2 hover:bg-white transition-colors border border-blue-100"
@@ -343,7 +343,7 @@ export default function OverviewPage() {
 
             {/* AI Analysis Modal */}
             {isAnalysisModalOpen && (
-                <div className="absolute inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="absolute inset-0 z-1000 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                             <div>

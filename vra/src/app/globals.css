@@ -6,6 +6,18 @@
   --color-flood-high: theme('colors.orange.500');
   --color-flood-severe: theme('colors.red.600');
   --font-sans: var(--font-inter);
+
+  @keyframes scroll {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  --animate-scroll: scroll 30s linear infinite;
 }
 
 :root {

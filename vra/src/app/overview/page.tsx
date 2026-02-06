@@ -13,6 +13,7 @@ import RiskBadge from '@/components/RiskBadge';
 import { INDIA_STATES } from '@/lib/indiaStates';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 const MapComponent = dynamic(() => import('@/components/Map'), {
     ssr: false,
@@ -100,14 +101,9 @@ export default function OverviewPage() {
 
         let rainfall = stateToAnalyze.rainfall;
         let humidity = stateToAnalyze.humidity;
-        let dataSource = "Live Ambee API";
+        let dataSource = "Open-Meteo API";
 
-        // If data is 0/missing, maybe warn or fetching failed
-        if (rainfall === 0 && humidity === 0) {
-            dataSource = "Mock/Default (Live data unavailable)";
-            // Fallback to random realistic data if live failed, for demo purposes?
-            // Or just stick to what we have.
-        }
+
 
         try {
             const response = await fetch('/api/ai-risk', {
@@ -388,9 +384,9 @@ export default function OverviewPage() {
                                     </div>
 
                                     {/* AI Output */}
-                                    <div className="prose prose-slate max-w-none">
-                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 whitespace-pre-wrap leading-relaxed shadow-inner">
-                                            {analysisResult}
+                                    <div className="prose prose-slate prose-headings:font-bold prose-headings:text-blue-900 prose-p:text-slate-700 prose-strong:text-blue-800 prose-li:text-slate-700 max-w-none">
+                                        <div className="p-5 bg-slate-50 rounded-xl border border-slate-100 shadow-inner">
+                                            <ReactMarkdown>{analysisResult}</ReactMarkdown>
                                         </div>
                                     </div>
 

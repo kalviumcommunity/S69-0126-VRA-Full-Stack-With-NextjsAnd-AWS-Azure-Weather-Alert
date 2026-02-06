@@ -1,10 +1,70 @@
+'use client';
+
 import Link from 'next/link';
-import { MapPin, Map, ArrowRight, Activity, CloudRain } from 'lucide-react';
+import { MapPin, Map, ArrowRight, Activity, CloudRain, Loader2 } from 'lucide-react';
 import AlertBanner from '@/components/AlertBanner';
-import { ALERTS, WEATHER_METRICS } from '@/lib/mockData';
-import TechStackTicker from '@/components/TechStackTicker';
+import { WEATHER_METRICS } from '@/lib/mockData';
+import { INDIA_STATES } from '@/lib/indiaStates';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
+  const [isLoadingAlerts, setIsLoadingAlerts] = useState(true);
+
+  useEffect(() => {
+    async function fetchLiveAlerts() {
+      setIsLoadingAlerts(true);
+      const alerts: any[] = [];
+      let alertIdCounter = 1;
+
+      // We will check a subset of states or all of them. 
+      // To prevent massive API spam on every home load, maybe limits or caching.
+      // For now, let's check high-risk prone states first or just iterate.
+      // Ambee might have rate limits.
+
+      const checkState = async (state: typeof INDIA_STATES[0]) => {
+        try {
+          const res = await fetch(`/api/floods?lat=${state.lat}&lng=${state.lng}`);
+          if (!res.ok) return null;
+          const data = await res.json();
+          const weather = data.data;
+
+          if (weather) {
+            const rain = weather.precipIntensity || 0;
+            // Risk Logic matching Overview
+            if (rain > 15) {
+              return {
+                id: alertIdCounter++,
+                type: 'critical',
+                location: state.name,
+                message: `Severe rainfall (${rain}mm) detected. High flood risk.`
+              };
+            } else if (rain > 5) {
+              return {
+                id: alertIdCounter++,
+                type: 'warning',
+                location: state.name,
+                message: `Heavy rainfall (${rain}mm) observed. Monitor situation.`
+              };
+            }
+          }
+        } catch (e) {
+          // Ignore errors
+        }
+        return null;
+      };
+
+      // Run in parallel
+      const results = await Promise.all(INDIA_STATES.map(s => checkState(s)));
+      const liveAlerts = results.filter(a => a !== null);
+
+      setActiveAlerts(liveAlerts);
+      setIsLoadingAlerts(false);
+    }
+
+    fetchLiveAlerts();
+  }, []);
+
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -22,12 +82,38 @@ export default function Home() {
         <section className="mb-12">
           <div className="flex items-center gap-2 mb-4">
             <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              {activeAlerts.length > 0 ? (
+                <>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </>
+              ) : (
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              )}
             </span>
-            <h2 className="text-2xl font-semibold text-slate-800">Active Flood Alerts</h2>
+            <h2 className="text-2xl font-semibold text-slate-800">
+              {isLoadingAlerts ? 'Scanning for Alerts...' : 'Active Flood Alerts'}
+            </h2>
           </div>
-          <AlertBanner alerts={ALERTS} />
+
+          {isLoadingAlerts ? (
+            <div className="flex items-center p-4 bg-blue-50 rounded-lg text-blue-700">
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Fetching real-time weather data for all regions...
+            </div>
+          ) : activeAlerts.length > 0 ? (
+            <AlertBanner alerts={activeAlerts} />
+          ) : (
+            <div className="p-6 bg-green-50 border border-green-200 rounded-lg text-green-800 flex items-center gap-3">
+              <div className="bg-green-100 p-2 rounded-full">
+                <Activity className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h4 className="font-bold">No Critical Alerts</h4>
+                <p className="text-sm mt-1">Current weather conditions across monitored regions are within safe limits.</p>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Quick Navigation Cards */}
@@ -80,35 +166,34 @@ export default function Home() {
             <span className="text-blue-600 text-sm">Updated: Just now</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <div className="text-blue-600 mb-1 flex items-center gap-2">
-                <Activity className="h-4 w-4" /> Active Warnings
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-red-50 to-orange-50 border border-red-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-red-600 mb-2 flex items-center gap-2 font-medium">
+                <Activity className="h-5 w-5" /> Active Warnings
               </div>
-              <div className="text-3xl font-bold text-red-500">2</div>
+              <div className="text-4xl font-extrabold text-red-600">{activeAlerts.length}</div>
             </div>
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <div className="text-blue-600 mb-1 flex items-center gap-2">
-                <CloudRain className="h-4 w-4" /> Max Rainfall
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-blue-600 mb-2 flex items-center gap-2 font-medium">
+                <CloudRain className="h-5 w-5" /> Max Rainfall
               </div>
-              <div className="text-3xl font-bold text-blue-600">{WEATHER_METRICS.rainfall}mm</div>
+              <div className="text-4xl font-extrabold text-blue-600">{WEATHER_METRICS.rainfall}mm</div>
             </div>
             {/* Placeholder stats */}
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <div className="text-blue-600 mb-1 flex items-center gap-2">
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-orange-600 mb-2 flex items-center gap-2 font-medium">
                 Affected States
               </div>
-              <div className="text-3xl font-bold text-orange-500">3</div>
+              <div className="text-4xl font-extrabold text-orange-600">{activeAlerts.length > 0 ? activeAlerts.length : 0}</div>
             </div>
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <div className="text-slate-400 mb-1 flex items-center gap-2">
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-emerald-600 mb-2 flex items-center gap-2 font-medium">
                 Monitoring Stations
               </div>
-              <div className="text-3xl font-bold text-emerald-600">124</div>
+              <div className="text-4xl font-extrabold text-emerald-600">124</div>
             </div>
           </div>
         </section>
       </div>
-      <TechStackTicker />
     </>
   );
 }

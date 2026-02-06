@@ -11,7 +11,6 @@ function cleanAndFormatText(text: string): string {
     .replace(/\*/g, '')
     .replace(/##/g, '')
     .replace(/#/g, '')
-    .replace(/\*\*/g, '')
     .replace(/`/g, '')
     .replace(/~/g, '')
     // Remove extra whitespace
@@ -19,8 +18,8 @@ function cleanAndFormatText(text: string): string {
     .trim();
 }
 
-// Helper function to call Gemini API with exponential backoff retry logic
-async function callGeminiWithRetry(
+// Helper function to call Groq API with exponential backoff retry logic
+async function callGroqWithRetry(
   prompt: string,
   systemInstruction: string,
   maxRetries: number = 3
@@ -30,46 +29,41 @@ async function callGeminiWithRetry(
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${process.env.Gemini_API_Key}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: prompt,
-                  },
-                ],
-              },
-            ],
-            systemInstruction: {
-              parts: [
-                {
-                  text: systemInstruction,
-                },
-              ],
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: systemInstruction
             },
-          }),
-        }
-      );
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500,
+        }),
+      });
 
-      // If successful or non-503 error, return immediately
+      // If successful or non-503/429 error, return immediately
       if (response.ok) {
         return response;
       }
 
       lastStatus = response.status;
 
-      // If 503 Service Unavailable and not the last attempt, retry with backoff
-      if (response.status === 503 && attempt < maxRetries - 1) {
-        const delayMs = Math.pow(2, attempt) * 2000; // 2s, 4s, 8s
+      // If 503 Service Unavailable or 429 Too Many Requests and not the last attempt, retry with backoff
+      if ((response.status === 503 || response.status === 429) && attempt < maxRetries - 1) {
+        const delayMs = Math.pow(2, attempt) * 1000;
         console.warn(
-          `Gemini API returned 503. Retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})...`
+          `Groq API returned ${response.status}. Retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})...`
         );
         await delay(delayMs);
         continue;
@@ -79,11 +73,11 @@ async function callGeminiWithRetry(
       return response;
     } catch (error) {
       lastError = error as Error;
-      
+
       // If not the last attempt, retry with backoff
       if (attempt < maxRetries - 1) {
-        const delayMs = Math.pow(2, attempt) * 2000; // 2s, 4s, 8s
-        console.error(`Gemini API Error on attempt ${attempt + 1}: ${lastError.message}. Retrying in ${delayMs}ms...`);
+        const delayMs = Math.pow(2, attempt) * 1000;
+        console.error(`Groq API Error on attempt ${attempt + 1}: ${lastError.message}. Retrying in ${delayMs}ms...`);
         await delay(delayMs);
         continue;
       }
@@ -104,9 +98,9 @@ async function callGeminiWithRetry(
 }
 
 export async function POST(req: Request) {
-  if (!process.env.Gemini_API_Key) {
+  if (!process.env.GROQ_API_KEY) {
     return NextResponse.json(
-      { error: "Server configuration error: Gemini API Key missing" },
+      { error: "Server configuration error: Groq API Key missing" },
       { status: 500 }
     );
   }
@@ -136,11 +130,11 @@ Please provide a concise daily climate summary: a one-line headline, then 2-3 sh
 
     const systemInstruction = "You are a professional meteorologist. Return plain text only (no markdown, no lists, no special characters). Start with a short headline (one line) followed by 2-3 concise sentences describing conditions, observations, and expected impacts or precautions.";
 
-    const response = await callGeminiWithRetry(prompt, systemInstruction);
+    const response = await callGroqWithRetry(prompt, systemInstruction);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API Error:", response.status, errorText);
+      console.error("Groq API Error:", response.status, errorText);
 
       // Handle quota exceeded (429): return a deterministic fallback summary
       if (response.status === 429) {
@@ -160,12 +154,12 @@ Please provide a concise daily climate summary: a one-line headline, then 2-3 sh
         );
       }
 
-      throw new Error(`Gemini API returned ${response.status}`);
+      throw new Error(`Groq API returned ${response.status}`);
     }
 
     const data = await response.json();
     let summary =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data.choices?.[0]?.message?.content ||
       "Unable to generate summary";
 
     // Clean and format the summary
@@ -173,7 +167,7 @@ Please provide a concise daily climate summary: a one-line headline, then 2-3 sh
 
     return NextResponse.json({
       summary,
-      model: "Gemini 3 Flash",
+      model: "Groq Llama 3.3",
     });
   } catch (error) {
     console.error("Climate Summary Error:", error);
